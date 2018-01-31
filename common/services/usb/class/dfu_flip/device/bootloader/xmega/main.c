@@ -45,23 +45,38 @@
  */
 
 #include <asf.h>
+#include <util/delay.h>
 #include "conf_usb.h"
+
+#define BLINK_DELAY_MS 500 //delay of blink (in milliseconds)
+#define LED_OFF PORTF_OUTCLR //turn off led
+#define LED_ON PORTF_OUTSET // turn on led
+#define USART_SERIAL &USARTE0
 
 /*! \brief Main function. Execution starts here.
  */
 int main(void)
 {
+    PORTF_DIRSET = 0b01110000; //sets PORT F LEDs to output
+    LED_ON =  0b00010000; //Red
+
 	// Map interrupt vectors table in bootloader section
 	ccp_write_io((uint8_t*)&PMIC.CTRL, PMIC_IVSEL_bm | PMIC_LOLVLEN_bm
 			| PMIC_MEDLVLEN_bm | PMIC_HILVLEN_bm);
 
 	sysclk_init();
 	cpu_irq_enable();
+    LED_OFF = 0b00010000; //Off
+    LED_ON =  0b00100000; //turns on LED 0
 
 	// Start USB stack to authorize VBus monitoring
 	udc_start();
 
 	while (true) {
+        LED_ON =  0b01000000; //turns on LED 0
+        _delay_ms (BLINK_DELAY_MS);
+        LED_OFF = 0b01000000; //turns off LED 0
+        _delay_ms (BLINK_DELAY_MS);
 	}
 }
 

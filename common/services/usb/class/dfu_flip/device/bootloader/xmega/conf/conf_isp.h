@@ -92,10 +92,10 @@
 # define ISP_PORT_IN       PORTC_IN
 # define ISP_PORT_PIN      6
 #elif XMEGA_C3
-# define ISP_PORT_DIR      PORTF_DIR
-# define ISP_PORT_PINCTRL  PORTF_PIN1CTRL
-# define ISP_PORT_IN       PORTF_IN
-# define ISP_PORT_PIN      1
+# define ISP_PORT_DIR      PORTE_DIR
+# define ISP_PORT_PINCTRL  PORTE_PIN1CTRL
+# define ISP_PORT_IN       PORTE_IN
+# define ISP_PORT_PIN      5
 #else
 # error Unknow AVR Xmega part
 #endif

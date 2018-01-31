@@ -4,7 +4,7 @@ SHELL = $(warning [$@ ($^) ($?)])$(OLD_SHELL)
 
 MCU = atxmega384c3
 AVRDUDE_OPTS = -c avrispmkii -P usb -p x384c3
-CLOCK = 2000000
+CLOCK = 32000000
 TARGET = dfu_bootloader
 SRCDIR = common/services/usb/class/dfu_flip/device/bootloader
 COMMONDIR = common
@@ -20,7 +20,11 @@ BUILDDIR = _build
 #FUSE5: 0b11111111: 0xff  No BOD, Erase EEPROM during chip erase
 #LOCK:  0b11111111: 0xff  No lock restrictions
 
-FUSES = -U fuse1:w:0xff:m -U fuse2:w:0xbf:m -U fuse4:w:0xff:m -U fuse5:w:0xff:m
+#For bootloader
+#FUSES = -U fuse1:w:0xff:m -U fuse2:w:0xbf:m -U fuse4:w:0xff:m -U fuse5:w:0xff:m
+
+#For no bootloader (update CFLAGS section-start as well)
+FUSES = -U fuse1:w:0xff:m -U fuse2:w:0xff:m -U fuse4:w:0xff:m -U fuse5:w:0xff:m
 
 AS = avr-as
 CC = avr-gcc
@@ -48,12 +52,13 @@ CSTANDARD = -std=gnu99
 CDEFS = \
 	-DF_CPU=$(CLOCK) \
 	-DBOARD=DUMMY_BOARD \
-	-DNO_LOCKBITS_DEF
+	-DNO_LOCKBITS_DEF \
 
 CFLAGS = \
 	-mmcu=$(MCU) \
 	-save-temps=obj \
 	-Os \
+#	-Wl,--section-start=.text=60000 \
 
 AFLAGS = \
 	-x assembler-with-cpp
@@ -94,8 +99,7 @@ ASRC += \
 #$(notdir $(ASRC:.s=.o)) $(notdir $(ASRC:.s90=.o))
 OBJS += $(SRC:%.c=$(BUILDDIR)/%.o)
 OBJS += $(ASRC:%.s=$(BUILDDIR)/%.o)
-$(warning ASRC = $(ASRC))
-$(warning OBJS = $(OBJS))
+
 
 all: $(BUILDDIR)/$(TARGET).hex
 #all: _build/main.o
@@ -103,7 +107,7 @@ all: $(BUILDDIR)/$(TARGET).hex
 clean:
 	rm -rf $(BUILDDIR)
 
-$(BUILDDIR)/%.o: %.c
+$(BUILDDIR)/%.o: %.c Makefile
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(CDEFS) $(CINCS) -c $< -o $@
 
@@ -118,12 +122,17 @@ $(BUILDDIR)/$(TARGET).hex: $(BUILDDIR)/$(TARGET).elf
 $(BUILDDIR)/$(TARGET).elf: $(OBJS)
 	$(CC) $(CFLAGS) $(CDEFS) -o $@ $(OBJS)
 
+#If you see avrdude just doing nothing, the USB device might be
+# in use by another program/VM. Make sure it's free.
 erase:
-	@avrdude $(AVRDUDE_OPTS) -e
+	avrdude $(AVRDUDE_OPTS) -e
 
 fuses:
-	@avrdude $(AVRDUDE_OPTS) $(FUSES)
+	avrdude $(AVRDUDE_OPTS) $(FUSES)
 
+#Don't use boot section here, avrdude bumps up the start address but the
+# linker needs to do this work. Use linker option instead. 
+# http://www.avrfreaks.net/forum/address-out-range-1
 flashbootloader: $(BUILDDIR)/$(TARGET).hex erase fuses
-	@avrdude $(AVRDUDE_OPTS) -U boot:w:$(BUILDDIR)/$(TARGET).hex
+	avrdude $(AVRDUDE_OPTS) -U flash:w:$(BUILDDIR)/$(TARGET).hex
 
