@@ -46,6 +46,8 @@
 
 #include <asf.h>
 #include <util/delay.h>
+#include <usart.h>
+#include <stdio_serial.h>
 #include "conf_usb.h"
 
 #define BLINK_DELAY_MS 500 //delay of blink (in milliseconds)
@@ -66,6 +68,18 @@ int main(void)
 
 	sysclk_init();
 	cpu_irq_enable();
+    
+    PORTE_DIRSET = 0b00001000; //Set PortE TX direction out
+    static usart_rs232_options_t USART_SERIAL_OPTIONS = {
+       .baudrate = 115200,
+       .charlength = USART_CHSIZE_8BIT_gc,
+       .paritytype = USART_PMODE_DISABLED_gc,
+       .stopbits = false,  //false == 1 stop bit
+    };
+    sysclk_enable_module(SYSCLK_PORT_E, PR_USART0_bm);
+    stdio_serial_init(USART_SERIAL, &USART_SERIAL_OPTIONS);
+    printf("\r\nBooting...\r\n");
+
     LED_OFF = 0b00010000; //Off
     LED_ON =  0b00100000; //turns on LED 0
 
@@ -73,6 +87,7 @@ int main(void)
 	udc_start();
 
 	while (true) {
+        printf("L");
         LED_ON =  0b01000000; //turns on LED 0
         _delay_ms (BLINK_DELAY_MS);
         LED_OFF = 0b01000000; //turns off LED 0

@@ -80,16 +80,25 @@ CINCS = \
 	-I$(COMMONDIR)/services/usb/udc \
 	-I$(COMMONDIR)/services/usb/class/dfu_flip \
 	-I$(COMMONDIR)/services/usb/class/dfu_flip/device \
+	-I$(XMEGADIR)/drivers/usart \
+	-I$(COMMONDIR)/utils/stdio/stdio_serial \
+	-I$(COMMONDIR)/services/serial \
+	-I$(XMEGADIR)/drivers/pmic \
+	-I$(COMMONDIR)/services/ioport \
 
 SRC +=  \
 	$(SRCDIR)/xmega/main.c \
 	$(COMMONDIR)/services/usb/class/dfu_flip/device/udi_dfu_atmel.c \
 	$(COMMONDIR)/services/usb/class/dfu_flip/device/udi_dfu_atmel_desc.c \
-	$(COMMONDIR)/services/usb/udc/udc.c \
+	$(COMMONDIR)/services/usb/udc/udc_dfu_small.c \
 	$(COMMONDIR)/services/clock/xmega/sysclk.c \
 	$(COMMONDIR)/services/isp/flip/xmega/isp.c \
 	$(XMEGADIR)/drivers/nvm/nvm.c \
 	$(XMEGADIR)/drivers/usb/usb_device.c \
+	$(XMEGADIR)/drivers/usart/usart.c \
+	$(COMMONDIR)/utils/stdio/write.c \
+	$(COMMONDIR)/utils/stdio/read.c \
+
 	
 ASRC += \
 	$(XMEGADIR)/drivers/nvm/nvm_asm.s \
