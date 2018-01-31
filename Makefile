@@ -3,7 +3,7 @@ OLD_SHELL := $(SHELL)
 SHELL = $(warning [$@ ($^) ($?)])$(OLD_SHELL)
 
 MCU = atxmega384c3
-AVRDUDE_DEVICE = x384c3
+AVRDUDE_OPTS = -c avrispmkii -P usb -p x384c3
 CLOCK = 2000000
 TARGET = dfu_bootloader
 SRCDIR = common/services/usb/class/dfu_flip/device/bootloader
@@ -13,6 +13,14 @@ SRC =
 ASRC = 
 OPT = s
 BUILDDIR = _build
+
+#FUSE1: 0b11111111: 0xff  Watchdog initial settings: 0xf, 0xf
+#FUSE2: 0b10111111: 0xff  BOD disabled, TOSC1/2 shared with XTAL, Bootloader enabled
+#FUSE4: 0b11111111: 0xff  Reset pin enabled, no startup delay, no watchdog lock
+#FUSE5: 0b11111111: 0xff  No BOD, Erase EEPROM during chip erase
+#LOCK:  0b11111111: 0xff  No lock restrictions
+
+FUSES = -U fuse1:w:0xff:m -U fuse2:w:0xbf:m -U fuse4:w:0xff:m -U fuse5:w:0xff:m
 
 AS = avr-as
 CC = avr-gcc
@@ -109,3 +117,13 @@ $(BUILDDIR)/$(TARGET).hex: $(BUILDDIR)/$(TARGET).elf
 
 $(BUILDDIR)/$(TARGET).elf: $(OBJS)
 	$(CC) $(CFLAGS) $(CDEFS) -o $@ $(OBJS)
+
+erase:
+	@avrdude $(AVRDUDE_OPTS) -e
+
+fuses:
+	@avrdude $(AVRDUDE_OPTS) $(FUSES)
+
+flashbootloader: $(BUILDDIR)/$(TARGET).hex erase fuses
+	@avrdude $(AVRDUDE_OPTS) -U boot:w:$(BUILDDIR)/$(TARGET).hex
+
