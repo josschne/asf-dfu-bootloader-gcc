@@ -58,10 +58,16 @@ CFLAGS = \
 	-mmcu=$(MCU) \
 	-save-temps=obj \
 	-Os \
-#	-Wl,--section-start=.text=60000 \
 
 AFLAGS = \
 	-x assembler-with-cpp
+
+#---------------- Linker Options ----------------
+#  -Wl,...:     tell GCC to pass this to linker.
+#    -Map:      create map file
+#    --cref:    add cross reference to  map file
+LDFLAGS = -Wl,-Map=$(TARGET).map,--cref
+#	      -Wl,--section-start=.text=60000 \
 
 # Place -I options here
 CINCS = \
@@ -110,11 +116,17 @@ OBJS += $(SRC:%.c=$(BUILDDIR)/%.o)
 OBJS += $(ASRC:%.s=$(BUILDDIR)/%.o)
 
 
-all: $(BUILDDIR)/$(TARGET).hex
+all: $(BUILDDIR)/$(TARGET).hex lss
 #all: _build/main.o
 
 clean:
 	rm -rf $(BUILDDIR)
+
+lss: $(TARGET).lss 
+
+# Create extended listing file from ELF output file.
+%.lss: $(BUILDDIR)/%.elf
+	$(OBJDUMP) -h -S -z $< > $@
 
 $(BUILDDIR)/%.o: %.c Makefile
 	mkdir -p $(dir $@)
@@ -129,7 +141,7 @@ $(BUILDDIR)/$(TARGET).hex: $(BUILDDIR)/$(TARGET).elf
 	$(SIZE) $@
 
 $(BUILDDIR)/$(TARGET).elf: $(OBJS)
-	$(CC) $(CFLAGS) $(CDEFS) -o $@ $(OBJS)
+	$(CC) $(CFLAGS) $(CDEFS) $(LDFLAGS) -o $@ $^ 
 
 #If you see avrdude just doing nothing, the USB device might be
 # in use by another program/VM. Make sure it's free.

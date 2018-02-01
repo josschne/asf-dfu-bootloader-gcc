@@ -63,10 +63,11 @@ int main(void)
     LED_ON =  0b00010000; //Red
 
 	// Map interrupt vectors table in bootloader section
-	ccp_write_io((uint8_t*)&PMIC.CTRL, PMIC_IVSEL_bm | PMIC_LOLVLEN_bm
-			| PMIC_MEDLVLEN_bm | PMIC_HILVLEN_bm);
+	// ccp_write_io((uint8_t*)&PMIC.CTRL, PMIC_IVSEL_bm | PMIC_LOLVLEN_bm
+	// 		| PMIC_MEDLVLEN_bm | PMIC_HILVLEN_bm);
 
 	sysclk_init();
+    pmic_init();
 	cpu_irq_enable();
     
     PORTE_DIRSET = 0b00001000; //Set PortE TX direction out
@@ -81,7 +82,6 @@ int main(void)
     printf("\r\nBooting...\r\n");
 
     LED_OFF = 0b00010000; //Off
-    LED_ON =  0b00100000; //turns on LED 0
 
 	// Start USB stack to authorize VBus monitoring
 	udc_start();

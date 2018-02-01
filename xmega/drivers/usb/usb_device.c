@@ -789,6 +789,7 @@ bool udd_ep_wait_stall_clear(udd_ep_id_t ep,
  */
 ISR(USB_BUSEVENT_vect)
 {
+	PORTF_OUTSET = 0b00010000;
 	if (udd_is_start_of_frame_event()) {
 		udd_ack_start_of_frame_event();
 		udc_sof_notify();
@@ -844,6 +845,7 @@ ISR(USB_BUSEVENT_vect)
 	}
 
 udd_interrupt_bus_event_end:
+	PORTF_OUTCLR = 0b00010000;
 	return;
 }
 
@@ -855,6 +857,8 @@ udd_interrupt_bus_event_end:
  */
 ISR(USB_TRNCOMPL_vect)
 {
+	PORTF_OUTSET = 0b00100000;
+
 #if (0!=USB_DEVICE_MAX_EP)
 	uint8_t ep_index;
 	uint8_t i_fifo;
@@ -922,6 +926,7 @@ ISR(USB_TRNCOMPL_vect)
 #endif
 
 udd_interrupt_tc_end:
+	PORTF_OUTCLR = 0b00100000;
 	return;
 }
 

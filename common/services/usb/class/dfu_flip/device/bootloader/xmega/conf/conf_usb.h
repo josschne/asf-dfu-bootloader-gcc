@@ -54,14 +54,14 @@
 # if defined(__GNUC__)
 //#   error GCC no supported when interrupt vectors space is optimized
 
-#   undef USB_BUSEVENT_vect
-#   undef USB_TRNCOMPL_vect
-#   undef USB_BUSEVENT_vect_num
-#   undef USB_TRNCOMPL_vect_num
-#   define USB_BUSEVENT_vect_num  1
-#   define USB_BUSEVENT_vect      _VECTOR(1)
-#   define USB_TRNCOMPL_vect_num  2
-#   define USB_TRNCOMPL_vect      _VECTOR(2)
+// #   undef USB_BUSEVENT_vect
+// #   undef USB_TRNCOMPL_vect
+// #   undef USB_BUSEVENT_vect_num
+// #   undef USB_TRNCOMPL_vect_num
+// #   define USB_BUSEVENT_vect_num  1
+// #   define USB_BUSEVENT_vect      _VECTOR(1)
+// #   define USB_TRNCOMPL_vect_num  2
+// #   define USB_TRNCOMPL_vect      _VECTOR(2)
 
 # elif defined(__ICCAVR__)
 #   undef USB_BUSEVENT_vect
