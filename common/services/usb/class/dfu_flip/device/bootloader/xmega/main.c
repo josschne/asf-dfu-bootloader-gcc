@@ -45,15 +45,46 @@
  */
 
 #include <asf.h>
+#include <stdio.h>
 #include <util/delay.h>
-// #include <usart.h>
-// #include <stdio_serial.h>
+#include <usart.h>
+#include <serial.h>
 #include "conf_usb.h"
 
 #define BLINK_DELAY_MS 500 //delay of blink (in milliseconds)
 #define LED_OFF PORTF_OUTCLR //turn off led
 #define LED_ON PORTF_OUTSET // turn on led
 #define USART_SERIAL &USARTE0
+
+int stdout_putchar(char c, FILE* f);
+
+extern volatile void *volatile stdio_base;
+extern int (*ptr_put)(void volatile*, char);
+static FILE debug_console = FDEV_SETUP_STREAM((int(*)(char, FILE*))stdout_putchar, NULL, _FDEV_SETUP_WRITE);
+
+int stdout_putchar(char c, FILE* f)
+{
+    while (usart_data_register_is_empty(USART_SERIAL) == false) {
+    }
+    
+    (USART_SERIAL)->DATA = c;
+    return STATUS_OK;
+}
+
+int usart_init() {
+    PORTE_OUTSET = 0b00001000; //Set PortE TX pin high
+    PORTE_DIRSET = 0b00001000; //Set PortE TX direction out
+    static usart_rs232_options_t USART_SERIAL_OPTIONS = {
+       .baudrate = 115200,
+       .charlength = USART_CHSIZE_8BIT_gc,
+       .paritytype = USART_PMODE_DISABLED_gc,
+       .stopbits = false,  //false == 1 stop bit
+    };
+    sysclk_enable_module(SYSCLK_PORT_E, PR_USART0_bm);
+    usart_serial_init(USART_SERIAL,&USART_SERIAL_OPTIONS);
+    stdout = &debug_console; 
+}
+
 
 /*! \brief Main function. Execution starts here.
  */
@@ -62,24 +93,15 @@ int main(void)
     PORTF_DIRSET = 0b01110000; //sets PORT F LEDs to output
     LED_ON =  0b00010000; //Red
 
-	// Map interrupt vectors table in bootloader section
-	ccp_write_io((uint8_t*)&PMIC.CTRL, PMIC_IVSEL_bm | PMIC_LOLVLEN_bm
-			| PMIC_MEDLVLEN_bm | PMIC_HILVLEN_bm);
+    // Map interrupt vectors table in bootloader section
+    ccp_write_io((uint8_t*)&PMIC.CTRL, PMIC_IVSEL_bm | PMIC_LOLVLEN_bm
+            | PMIC_MEDLVLEN_bm | PMIC_HILVLEN_bm);
 
-	sysclk_init();
-    // pmic_init();
-	cpu_irq_enable();
-    
-    // PORTE_DIRSET = 0b00001000; //Set PortE TX direction out
-    // static usart_rs232_options_t USART_SERIAL_OPTIONS = {
-    //    .baudrate = 115200,
-    //    .charlength = USART_CHSIZE_8BIT_gc,
-    //    .paritytype = USART_PMODE_DISABLED_gc,
-    //    .stopbits = false,  //false == 1 stop bit
-    // };
-    // sysclk_enable_module(SYSCLK_PORT_E, PR_USART0_bm);
-    // stdio_serial_init(USART_SERIAL, &USART_SERIAL_OPTIONS);
-    // printf("\r\nBooting...\r\n");
+    sysclk_init();
+    cpu_irq_enable();
+    usart_init();
+
+    printf("\r\nBooting...\r\n");
 
     LED_OFF = 0b00010000; //Off
 
@@ -87,7 +109,7 @@ int main(void)
 	udc_start();
 
 	while (true) {
-        // printf("L");
+        printf("L");
         LED_ON =  0b01000000; //turns on LED 0
         _delay_ms (BLINK_DELAY_MS);
         LED_OFF = 0b01000000; //turns off LED 0

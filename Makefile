@@ -58,6 +58,7 @@ CFLAGS = \
 	-mmcu=$(MCU) \
 	-save-temps=obj \
 	-Os \
+	-fdata-sections -ffunction-sections \
 
 AFLAGS = \
 	-x assembler-with-cpp
@@ -68,6 +69,9 @@ AFLAGS = \
 #    --cref:    add cross reference to  map file
 LDFLAGS = -Wl,-Map=$(TARGET).map,--cref \
 	      -Wl,--section-start=.text=60000 \
+	      -Wl,--gc-sections \
+		  -fwhole-program \
+#	      -Wl,-u,vfprintf -lprintf_min \
 
 # Place -I options here
 CINCS = \
@@ -86,11 +90,11 @@ CINCS = \
 	-I$(COMMONDIR)/services/usb/udc \
 	-I$(COMMONDIR)/services/usb/class/dfu_flip \
 	-I$(COMMONDIR)/services/usb/class/dfu_flip/device \
-	# -I$(XMEGADIR)/drivers/usart \
-	# -I$(COMMONDIR)/utils/stdio/stdio_serial \
-	# -I$(COMMONDIR)/services/serial \
-	# -I$(XMEGADIR)/drivers/pmic \
-	# -I$(COMMONDIR)/services/ioport \
+	-I$(XMEGADIR)/drivers/usart \
+	-I$(COMMONDIR)/utils/stdio/stdio_serial \
+	-I$(COMMONDIR)/services/serial \
+	-I$(XMEGADIR)/drivers/pmic \
+	-I$(COMMONDIR)/services/ioport \
 
 SRC +=  \
 	$(SRCDIR)/xmega/main.c \
@@ -101,10 +105,7 @@ SRC +=  \
 	$(COMMONDIR)/services/isp/flip/xmega/isp.c \
 	$(XMEGADIR)/drivers/nvm/nvm.c \
 	$(XMEGADIR)/drivers/usb/usb_device.c \
-	# $(XMEGADIR)/drivers/usart/usart.c \
-	# $(COMMONDIR)/utils/stdio/write.c \
-	# $(COMMONDIR)/utils/stdio/read.c \
-
+	$(XMEGADIR)/drivers/usart/usart.c \
 	
 ASRC += \
 	$(XMEGADIR)/drivers/nvm/nvm_asm.s \
