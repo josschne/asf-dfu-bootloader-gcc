@@ -21,10 +21,10 @@ BUILDDIR = _build
 #LOCK:  0b11111111: 0xff  No lock restrictions
 
 #For bootloader
-#FUSES = -U fuse1:w:0xff:m -U fuse2:w:0xbf:m -U fuse4:w:0xff:m -U fuse5:w:0xff:m
+FUSES = -U fuse1:w:0xff:m -U fuse2:w:0xbf:m -U fuse4:w:0xff:m -U fuse5:w:0xff:m
 
 #For no bootloader (update CFLAGS section-start as well)
-FUSES = -U fuse1:w:0xff:m -U fuse2:w:0xff:m -U fuse4:w:0xff:m -U fuse5:w:0xff:m
+#FUSES = -U fuse1:w:0xff:m -U fuse2:w:0xff:m -U fuse4:w:0xff:m -U fuse5:w:0xff:m
 
 AS = avr-as
 CC = avr-gcc
@@ -66,8 +66,8 @@ AFLAGS = \
 #  -Wl,...:     tell GCC to pass this to linker.
 #    -Map:      create map file
 #    --cref:    add cross reference to  map file
-LDFLAGS = -Wl,-Map=$(TARGET).map,--cref
-#	      -Wl,--section-start=.text=60000 \
+LDFLAGS = -Wl,-Map=$(TARGET).map,--cref \
+	      -Wl,--section-start=.text=60000 \
 
 # Place -I options here
 CINCS = \
@@ -86,11 +86,11 @@ CINCS = \
 	-I$(COMMONDIR)/services/usb/udc \
 	-I$(COMMONDIR)/services/usb/class/dfu_flip \
 	-I$(COMMONDIR)/services/usb/class/dfu_flip/device \
-	-I$(XMEGADIR)/drivers/usart \
-	-I$(COMMONDIR)/utils/stdio/stdio_serial \
-	-I$(COMMONDIR)/services/serial \
-	-I$(XMEGADIR)/drivers/pmic \
-	-I$(COMMONDIR)/services/ioport \
+	# -I$(XMEGADIR)/drivers/usart \
+	# -I$(COMMONDIR)/utils/stdio/stdio_serial \
+	# -I$(COMMONDIR)/services/serial \
+	# -I$(XMEGADIR)/drivers/pmic \
+	# -I$(COMMONDIR)/services/ioport \
 
 SRC +=  \
 	$(SRCDIR)/xmega/main.c \
@@ -101,9 +101,9 @@ SRC +=  \
 	$(COMMONDIR)/services/isp/flip/xmega/isp.c \
 	$(XMEGADIR)/drivers/nvm/nvm.c \
 	$(XMEGADIR)/drivers/usb/usb_device.c \
-	$(XMEGADIR)/drivers/usart/usart.c \
-	$(COMMONDIR)/utils/stdio/write.c \
-	$(COMMONDIR)/utils/stdio/read.c \
+	# $(XMEGADIR)/drivers/usart/usart.c \
+	# $(COMMONDIR)/utils/stdio/write.c \
+	# $(COMMONDIR)/utils/stdio/read.c \
 
 	
 ASRC += \
