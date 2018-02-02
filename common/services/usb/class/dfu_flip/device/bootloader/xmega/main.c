@@ -62,6 +62,82 @@ extern volatile void *volatile stdio_base;
 extern int (*ptr_put)(void volatile*, char);
 static FILE debug_console = FDEV_SETUP_STREAM((int(*)(char, FILE*))stdout_putchar, NULL, _FDEV_SETUP_WRITE);
 
+#define PRINT_ISR(x) \
+    ISR(x, ISR_NAKED) { puts(#x); while(1); }
+
+// PRINT_ISR(OSC_OSCF_vect);
+// PRINT_ISR(PORTC_INT0_vect);
+// PRINT_ISR(PORTC_INT1_vect);
+// PRINT_ISR(PORTR_INT0_vect);
+// PRINT_ISR(PORTR_INT1_vect);
+// PRINT_ISR(DMA_CH0_vect);
+// PRINT_ISR(DMA_CH1_vect);
+// PRINT_ISR(RTC_OVF_vect);
+// PRINT_ISR(TWIC_TWIS_vect);
+// PRINT_ISR(TWIC_TWIM_vect);
+// PRINT_ISR(TCC0_OVF_vect);
+// PRINT_ISR(TCC0_ERR_vect);
+// PRINT_ISR(TCC0_CCA_vect);
+// PRINT_ISR(TCC0_CCB_vect);
+// PRINT_ISR(TCC0_CCC_vect);
+// PRINT_ISR(TCC0_CCD_vect);
+// PRINT_ISR(TCC1_OVF_vect);
+// PRINT_ISR(TCC1_ERR_vect);
+// PRINT_ISR(TCC1_CCA_vect);
+// PRINT_ISR(TCC1_CCB_vect);
+// PRINT_ISR(SPIC_INT_vect);
+// PRINT_ISR(USARTC0_RXC_vect);
+// PRINT_ISR(USARTC0_DRE_vect);
+// PRINT_ISR(USARTC0_TXC_vect);
+// PRINT_ISR(USARTC1_RXC_vect);
+// PRINT_ISR(USARTC1_DRE_vect);
+// PRINT_ISR(USARTC1_TXC_vect);
+// PRINT_ISR(AES_INT_vect);
+// PRINT_ISR(NVM_EE_vect);
+// PRINT_ISR(NVM_SPM_vect);
+// PRINT_ISR(PORTB_INT0_vect);
+// PRINT_ISR(PORTB_INT1_vect);
+// PRINT_ISR(PORTE_INT0_vect);
+// PRINT_ISR(PORTE_INT1_vect);
+// PRINT_ISR(TWIE_TWIS_vect);
+// PRINT_ISR(TWIE_TWIM_vect);
+// PRINT_ISR(TCE0_OVF_vect);
+// PRINT_ISR(TCE0_ERR_vect);
+// PRINT_ISR(TCE0_CCA_vect);
+// PRINT_ISR(TCE0_CCB_vect);
+// PRINT_ISR(TCE0_CCC_vect);
+// PRINT_ISR(TCE0_CCD_vect);
+// PRINT_ISR(USARTE0_RXC_vect);
+// PRINT_ISR(USARTE0_DRE_vect);
+// PRINT_ISR(USARTE0_TXC_vect);
+// PRINT_ISR(PORTD_INT0_vect);
+// PRINT_ISR(PORTD_INT1_vect);
+// PRINT_ISR(PORTA_INT0_vect);
+// PRINT_ISR(PORTA_INT1_vect);
+// PRINT_ISR(ACA_AC0_vect);
+// PRINT_ISR(ACA_AC1_vect);
+// PRINT_ISR(ACA_ACW_vect);
+// PRINT_ISR(ADCA_CH0_vect);
+// PRINT_ISR(TCD0_ERR_vect);
+// PRINT_ISR(TCD0_CCA_vect);
+// PRINT_ISR(TCD0_CCB_vect);
+// PRINT_ISR(TCD0_CCC_vect);
+// PRINT_ISR(TCD0_CCD_vect);
+// PRINT_ISR(TCD0_OVF_vect);
+// PRINT_ISR(SPID_INT_vect);
+// PRINT_ISR(USARTD0_RXC_vect);
+// PRINT_ISR(USARTD0_DRE_vect);
+// PRINT_ISR(USARTD0_TXC_vect);
+// PRINT_ISR(PORTF_INT0_vect);
+// PRINT_ISR(PORTF_INT1_vect);
+// PRINT_ISR(TCF0_OVF_vect);
+// PRINT_ISR(TCF0_ERR_vect);
+// PRINT_ISR(TCF0_CCA_vect);
+// PRINT_ISR(TCF0_CCB_vect);
+// PRINT_ISR(TCF0_CCC_vect);
+// PRINT_ISR(TCF0_CCD_vect);
+
+
 int stdout_putchar(char c, FILE* f)
 {
     while (usart_data_register_is_empty(USART_SERIAL) == false) {
@@ -69,6 +145,19 @@ int stdout_putchar(char c, FILE* f)
     
     (USART_SERIAL)->DATA = c;
     return STATUS_OK;
+}
+
+void stdout_put8(uint8_t val)
+{
+    static uint8_t hex_chars[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+    putc(hex_chars[(val >> 4)], stdout);
+    putc(hex_chars[(val & 0x0F)], stdout);
+}
+
+ISR(BADISR_vect)
+{
+    puts("BI:");
+    stdout_put8(PMIC.STATUS);
 }
 
 int usart_init() {
@@ -94,22 +183,29 @@ int main(void)
     LED_ON =  0b00010000; //Red
 
     // Map interrupt vectors table in bootloader section
+#ifdef PLACE_IN_BOOTLOADER_MEM
     ccp_write_io((uint8_t*)&PMIC.CTRL, PMIC_IVSEL_bm | PMIC_LOLVLEN_bm
             | PMIC_MEDLVLEN_bm | PMIC_HILVLEN_bm);
+#else
+    pmic_init();
+#endif
 
     sysclk_init();
     cpu_irq_enable();
     usart_init();
 
-    printf("\r\nBooting...\r\n");
+    puts("\r\nBooting... \r\n");
+    stdout_put8(RST.STATUS);
+    RST.STATUS = RST.STATUS; //Clear reset bits
 
+    _delay_ms(1000);
     LED_OFF = 0b00010000; //Off
 
 	// Start USB stack to authorize VBus monitoring
 	udc_start();
 
 	while (true) {
-        printf("L");
+        puts("L");
         LED_ON =  0b01000000; //turns on LED 0
         _delay_ms (BLINK_DELAY_MS);
         LED_OFF = 0b01000000; //turns off LED 0

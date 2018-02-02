@@ -579,7 +579,8 @@ ERROR_FUNC(compiler_demux_bad_size, "Invalid parameter size");
 #  else
 #    define Assert(expr) \
 	{\
-		if (!(expr)) while (true);\
+    extern int  printf(const char *__fmt, ...);\
+		if (!(expr)) { printf("Assert %s %s %s", __FILE__, __LINE__, __FUNCTION__); while (true); }\
 	}
 #  endif
 #else

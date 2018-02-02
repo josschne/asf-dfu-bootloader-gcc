@@ -87,7 +87,7 @@
 	/**
 	 * \brief Perform SPM command
 	 */
-	PUBLIC_FUNCTION_SEGMENT(nvm_common_spm, BOOT)
+	PUBLIC_FUNCTION_SEGMENT(nvm_common_spm, text)
 
 #if defined(__GNUC__)
 	/**
@@ -136,7 +136,7 @@
 	 * \brief Load byte to page buffer
 	 *
 	 */
-	PUBLIC_FUNCTION_SEGMENT(nvm_flash_load_word_to_buffer, BOOT)
+	PUBLIC_FUNCTION_SEGMENT(nvm_flash_load_word_to_buffer, text)
 
 #if defined(__GNUC__)
 	/**

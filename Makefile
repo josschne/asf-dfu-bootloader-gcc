@@ -13,6 +13,8 @@ SRC =
 ASRC = 
 OPT = s
 BUILDDIR = _build
+PLACE_IN_BOOTLOADER_MEM = yes
+BOOTLOADER_MEM_START_ADDR = 60000  # Must match chosen MCU, in bytes (not words like the Atmel docs use)
 
 #FUSE1: 0b11111111: 0xff  Watchdog initial settings: 0xf, 0xf
 #FUSE2: 0b10111111: 0xff  BOD disabled, TOSC1/2 shared with XTAL, Bootloader enabled
@@ -20,11 +22,14 @@ BUILDDIR = _build
 #FUSE5: 0b11111111: 0xff  No BOD, Erase EEPROM during chip erase
 #LOCK:  0b11111111: 0xff  No lock restrictions
 
-#For bootloader
-FUSES = -U fuse1:w:0xff:m -U fuse2:w:0xbf:m -U fuse4:w:0xff:m -U fuse5:w:0xff:m
 
-#For no bootloader (update CFLAGS section-start as well)
-#FUSES = -U fuse1:w:0xff:m -U fuse2:w:0xff:m -U fuse4:w:0xff:m -U fuse5:w:0xff:m
+ifeq ($(PLACE_IN_BOOTLOADER_MEM), yes)
+#For running from bootloader mem
+FUSES = -U fuse1:w:0xff:m -U fuse2:w:0xbf:m -U fuse4:w:0xff:m -U fuse5:w:0xff:m
+else
+#For running from application mem
+FUSES = -U fuse1:w:0xff:m -U fuse2:w:0xff:m -U fuse4:w:0xff:m -U fuse5:w:0xff:m
+endif
 
 AS = avr-as
 CC = avr-gcc
@@ -53,6 +58,11 @@ CDEFS = \
 	-DF_CPU=$(CLOCK) \
 	-DBOARD=DUMMY_BOARD \
 	-DNO_LOCKBITS_DEF \
+#	-D_ASSERT_ENABLE_ \
+
+ifeq ($(PLACE_IN_BOOTLOADER_MEM), yes)
+CDEFS +=	-DPLACE_IN_BOOTLOADER_MEM
+endif
 
 CFLAGS = \
 	-mmcu=$(MCU) \
@@ -68,10 +78,14 @@ AFLAGS = \
 #    -Map:      create map file
 #    --cref:    add cross reference to  map file
 LDFLAGS = -Wl,-Map=$(TARGET).map,--cref \
-	      -Wl,--section-start=.text=60000 \
 	      -Wl,--gc-sections \
-		  -fwhole-program \
 #	      -Wl,-u,vfprintf -lprintf_min \
+#		  -fwhole-program \
+
+ifeq ($(PLACE_IN_BOOTLOADER_MEM), yes)
+LDFLAGS += -Wl,--section-start=.text=$(BOOTLOADER_MEM_START_ADDR)
+endif
+
 
 # Place -I options here
 CINCS = \
