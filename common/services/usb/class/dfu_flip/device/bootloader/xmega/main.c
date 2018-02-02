@@ -174,6 +174,11 @@ int usart_init() {
     stdout = &debug_console; 
 }
 
+void jump_to_app() {
+    __asm(
+        "  jmp 0          \n"
+    );
+}
 
 /*! \brief Main function. Execution starts here.
  */
@@ -194,13 +199,37 @@ int main(void)
     cpu_irq_enable();
     usart_init();
 
-    puts("\r\nBooting... \r\n");
-    stdout_put8(RST.STATUS);
-    RST.STATUS = RST.STATUS; //Clear reset bits
-
-    _delay_ms(1000);
+    puts("\r\nBootloader\r\n");
     LED_OFF = 0b00010000; //Off
 
+    //If reset was a software reset, there is a main app, jump to it.
+    if ((RST.STATUS & RST_SRF_bm) != 0) {
+        puts("Soft reset, booting app");
+        RST.STATUS = RST.STATUS;
+        jump_to_app();
+    }
+
+    //If the bootloader pin is activated, run bootloader.
+    //If the bootloader pin is not activated, check for blank flash.
+    //If flash is blank, run bootloader, otherwise run the app.
+    ISP_PORT_DIR &= ~(1<<ISP_PORT_PIN); //Ensure pin is set to input
+    ISP_PORT_PINCTRL = PORT_OPC_PULLUP_gc; //Set our pin to pullup
+    _delay_ms(10); //Give the pullup time to work
+
+    //Bootloader pin is active low
+    if (((ISP_PORT_IN & (1<<ISP_PORT_PIN)) != 0)) {
+        puts("ISP Pin not set");
+        if (nvm_flash_read_word(0) != 0xFFFF) {
+            puts("Flash not empty, booting app");
+            jump_to_app();
+        } else {
+            puts("Flash empty, boot into DFU");
+        }
+    } else {
+        puts("ISP Pin set, boot into DFU");
+    }
+
+    puts("DFU running");
 	// Start USB stack to authorize VBus monitoring
 	udc_start();
 
