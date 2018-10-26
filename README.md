@@ -1,2 +1,11 @@
-# asf-dfu-bootloader-gcc
-ASF-based DFU bootloader with necessary modifications to build with gcc
+=======
+## Installation
+
+   ```brew install avr-gcc```
+   ```brew install avr-gdb```
+
+## Building
+
+   ```make```
+
+   ```make flashbootloader```
