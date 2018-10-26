@@ -250,6 +250,7 @@ void isp_init(void)
 
 bool isp_is_security(void)
 {
+#undef LOCKBITS  //Fix for avr-gcc's poor choice of builtin macro LOCKBITS in avr/lock.h
 	return !(NVM.LOCKBITS&NVM_LOCKBITS_LB1_bm);
 }
 
