@@ -1,4 +1,3 @@
-=======
 ## Installation
 
    ```brew install avr-gcc```
